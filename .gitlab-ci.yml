@@ -1,0 +1,132 @@
+stages:
+  - test
+  - dev
+  - qual
+  - prod
+  - integration-test
+
+
+image: git.teamwork.net:5043/docker/serverless-deploy:17.10-TW-1.6
+
+variables:
+  PIPENV_VENV_IN_PROJECT: "1"
+  PIP_CACHE_DIR: $CI_PROJECT_DIR/.pip-cache
+
+cache:
+  paths:
+    - .venv
+    - .pip-cache
+    - node_modules
+  key: serverless
+
+before_script:
+  - export LC_ALL=C.UTF-8
+  - export LANG=C.UTF-8
+  - |
+    set +e
+    pipenv --venv; NO_VENV=$? ; echo 'No fail'
+    set -e
+    if [ $NO_VENV -eq 1 ]; then
+      pipenv --python 3.7
+    fi
+  - pipenv install --dev
+
+after_script:
+  - cp -RL .venv venv
+  - rm -Rf .venv
+  - mv venv .venv
+
+pylint:
+  stage: test
+  except:
+    - tags
+  script:
+    - pipenv run pylint src/
+
+pytest:
+  stage: test
+  except:
+    - tags
+  script:
+    - export AWS_DEFAULT_REGION="eu-west-1"
+    - pipenv run python -m pytest src/unit_test/ --junitxml=test-report.xml
+  artifacts:
+    reports:
+      junit: test-report.xml
+    paths:
+      - coverage.xml
+  coverage: '/\d+\%\s*$/'
+
+deploy-dev:
+  stage: dev
+  environment:
+    name: $CI_COMMIT_REF_NAME
+    on_stop: destroy-dev
+  except:
+    - tags
+    - master
+  script:
+    - npm install
+    - export ENV=DEV
+    - export ENV_NAME=$(python3 -c "import os; print(''.join([word.title() for word in os.environ['CI_COMMIT_REF_NAME'].replace('-', '_').split('_')[1:]])[:10])")
+    - export AWS_DEFAULT_REGION="eu-west-1"
+  artifacts:
+    paths:
+      - .serverless/stack.json
+    expire_in: 1 week
+
+destroy-dev:
+  stage: dev
+  environment:
+    name: $CI_COMMIT_REF_NAME
+    action: stop
+  except:
+    - tags
+    - master
+  when: manual
+  script:
+    - npm install
+    - source conf_git/DEV.env
+    - export ENV=DEV
+    - export ENV_NAME=$(python3 -c "import os; print(''.join([word.title() for word in os.environ['CI_COMMIT_REF_NAME'].replace('-', '_').split('_')[1:]])[:10])")
+    - export AWS_DEFAULT_REGION="eu-west-1"
+    - serverless remove --stage $ENV_NAME
+    - pipenv run python delete_kms.py
+
+
+deploy-dev-master:
+  stage: dev
+  environment:
+    name: DEV
+  only:
+    - master
+  script:
+    - npm install
+    - source conf_git/DEV.env;
+    - export ENV=DEV
+    - export ENV_NAME=DEV
+    - export AWS_DEFAULT_REGION="eu-west-1"
+    - export KMSARN=$(pipenv run python create_kms.py)
+    - echo $KMSARN
+    - serverless deploy --stage $ENV_NAME
+  artifacts:
+    paths:
+      - .serverless/stack.json
+    expire_in: 1 week
+
+destroy-dev-master:
+  stage: dev
+  environment:
+    name: DEV
+    action: stop
+  only:
+    - master
+  when: manual
+  script:
+    - npm install
+    - source conf_git/DEV.env
+    - export ENV=DEV
+    - export ENV_NAME=DEV
+    - export AWS_DEFAULT_REGION="eu-west-1"
+    - serverless remove --stage $ENV_NAME
+    - pipenv run python delete_kms.py

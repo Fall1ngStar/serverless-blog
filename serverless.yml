@@ -1,0 +1,39 @@
+package:
+  exclude:
+  - ./**
+  - '!src/**'
+  - src/unit_test/**
+  - src/integration_test/**
+provider:
+  deploymentBucket: ${env:DEPLOYMENT_BUCKET}
+  environment:
+    DYNAMO_TABLE: ${self:resources.Outputs.PostsTable.Value}
+  iamRoleStatements:
+  - Action: dynamodb:*
+    Effect: Allow
+    Resource:
+    - arn:aws:dynamodb:#{AWS::Region}:#{AWS::AccountId}:table/posts${opt:stage}
+  logRetentionInDays: 14
+  memorySize: 128
+  name: aws
+  region: eu-west-1
+  runtime: python3.7
+  timeout: 60
+resources:
+  Outputs:
+    PostsTable:
+      Value: posts${opt:stage}
+  Resources:
+    PostsTable:
+      Properties:
+        AttributeDefinitions:
+        - AttributeName: post_id
+          AttributeType: S
+        BillingMode: PAY_PER_REQUEST
+        KeySchema:
+        - AttributeName: post_id
+          KeyType: HASH
+        TableName: posts${opt:stage}
+      Type: AWS::DynamoDB::Table
+service:
+  name: simple-blog
