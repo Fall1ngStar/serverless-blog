@@ -35,21 +35,26 @@ functions:
           path: posts
           method: get
           cors: true
+          request:
+            parameters:
+              query:
+                page: false
 package:
   exclude:
-  - ./**
-  - '!src/**'
-  - src/unit_test/**
-  - src/integration_test/**
+    - ./**
+    - '!src/**'
+    - src/unit_test/**
+    - src/integration_test/**
 provider:
   deploymentBucket: ${env:DEPLOYMENT_BUCKET}
   environment:
     DYNAMO_TABLE: ${self:resources.Outputs.PostsTable.Value}
   iamRoleStatements:
-  - Action: dynamodb:*
-    Effect: Allow
-    Resource:
-    - arn:aws:dynamodb:#{AWS::Region}:#{AWS::AccountId}:table/posts${opt:stage}
+    - Action: dynamodb:*
+      Effect: Allow
+      Resource:
+        - arn:aws:dynamodb:#{AWS::Region}:#{AWS::AccountId}:table/posts${opt:stage}
+        - arn:aws:dynamodb:#{AWS::Region}:#{AWS::AccountId}:table/posts${opt:stage}/index/*
   logRetentionInDays: 14
   memorySize: 128
   name: aws
@@ -64,15 +69,28 @@ resources:
     PostsTable:
       Properties:
         AttributeDefinitions:
-        - AttributeName: post_id
-          AttributeType: N
+          - AttributeName: post_id
+            AttributeType: S
+          - AttributeName: type
+            AttributeType: S
+          - AttributeName: create_date
+            AttributeType: S
         BillingMode: PAY_PER_REQUEST
         KeySchema:
-        - AttributeName: post_id
-          KeyType: HASH
+          - AttributeName: post_id
+            KeyType: HASH
         TableName: posts${opt:stage}
+        GlobalSecondaryIndexes:
+          - IndexName: type-date-index
+            KeySchema:
+              - AttributeName: type
+                KeyType: HASH
+              - AttributeName: create_date
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
       Type: AWS::DynamoDB::Table
 service:
   name: simple-blog
 plugins:
-- serverless-pseudo-parameters
+  - serverless-pseudo-parameters

@@ -9,4 +9,5 @@ def handler(event, _context):
     """
     Handler for the create_post Lambda function
     """
+
     return dump_result('Post created', status_code=201)
