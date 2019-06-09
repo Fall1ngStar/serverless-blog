@@ -23,62 +23,62 @@
           class="list-group-item"
           v-for="comment in post.comments"
           v-bind:key="comment.create_date"
-        >{{comment.content}}</li>
+        >{{comment.content}}
+        </li>
       </ul>
     </div>
   </div>
 </template>
 
 <script>
-export default {
-  name: "id",
-  async asyncData({ params, env }) {
-    let url = env.apiUrl + "/posts/" + params.id;
-    let response = await fetch(url);
-    let data = await response.json();
-    return {
-      post: data
-    };
-  },
-  methods: {
-    async deletePost({ params, env }) {
-      let url = process.env.apiUrl + "/posts/" + this.$route.params.id;
-      console.log(url);
-      let response = await fetch(url, { method: "DELETE" });
-      this.$router.push("/");
-    },
-    async sendComment(e) {
-      e.preventDefault();
-      let url = process.env.apiUrl + "/posts/" + this.$route.params.id;
-      let params = {
-        method: "POST",
-        cors: true,
-        body: JSON.stringify({
-          content: this.comment_content
-        })
+  export default {
+    name: 'id',
+    async asyncData({params, env}) {
+      let url = `${env.apiUrl}/posts/${params.id}`;
+      let response = await fetch(url);
+      let data = await response.json();
+      return {
+        post: data
       };
-      let response = await fetch(url, params);
-      this.post.comments.unshift({ content: this.comment_content });
-      this.comment_content = "";
-      console.log(await response.json());
+    },
+    methods: {
+      async deletePost({params, env}) {
+        let url = `${process.env.apiUrl}/posts/${this.$route.params.id}`;
+        await fetch(url, {method: 'DELETE'});
+        this.$router.push('/');
+      },
+      async sendComment(e) {
+        e.preventDefault();
+        let url = `${process.env.apiUrl}/posts/${this.$route.params.id}`;
+        let params = {
+          method: 'POST',
+          cors: true,
+          body: JSON.stringify({
+            content: this.comment_content
+          })
+        };
+        await fetch(url, params);
+        this.post.comments.unshift({content: this.comment_content});
+        this.comment_content = '';
+      }
+    },
+    data: () => {
+      return {
+        comment_content: ''
+      };
     }
-  },
-  data: () => {
-    return {
-      comment_content: ""
-    };
-  }
-};
+  };
 </script>
 
 <style scoped>
-#post,
-#comment-form {
-  margin: 1em;
-}
-#delete-post {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+  #post,
+  #comment-form {
+    margin: 1em;
+  }
+
+  #delete-post {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
 </style>

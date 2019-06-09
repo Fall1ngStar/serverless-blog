@@ -20,39 +20,39 @@
 </template>
 
 <script>
-export default {
-  name: "create",
-  methods: {
-    async createPost(e) {
-      e.preventDefault();
-      let body = {
-        title: this.title,
-        author: this.author,
-        content: this.content
-      };
-      let url = process.env.apiUrl + "/posts/create";
-      let params = {
+  export default {
+    name: 'create',
+    methods: {
+      async createPost(e) {
+        e.preventDefault();
+        let body = {
+          title: this.title,
+          author: this.author,
+          content: this.content
+        };
+        let url = `${process.env.apiUrl}/posts/create`;
+        let params = {
           method: 'POST',
           cors: true,
           body: JSON.stringify(body)
+        };
+        let response = await fetch(url, params);
+        let content = await response.json();
+        this.$router.push('/post/' + content.post_id);
+      }
+    },
+    data: () => {
+      return {
+        title: '',
+        content: '',
+        author: '',
       };
-      let response = await fetch(url, params);
-      let content = await response.json();
-      this.$router.push('/post/' + content.post_id);
     }
-  },
-  data: () => {
-    return {
-      title: "",
-      content: "",
-      author: ""
-    };
-  }
-};
+  };
 </script>
 
 <style scoped>
-.container {
-  padding: 0.5em;
-}
+  .container {
+    padding: 0.5em;
+  }
 </style>

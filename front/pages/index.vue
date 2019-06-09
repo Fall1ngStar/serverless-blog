@@ -8,36 +8,37 @@
           v-bind:key="page.content"
           :class="page.classes"
           :to="page.url"
-        >{{page.content}}</nuxt-link>
+        >{{page.content}}
+        </nuxt-link>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import PostCard from "~/components/PostCard.vue";
+  import PostCard from '~/components/PostCard.vue';
 
-export default {
-  components: { PostCard },
-  async asyncData({ params, query, env }) {
-    let url = env.apiUrl + "/posts/" + (query.page ? "?page=" + query.page : "");
-    let response = await fetch(url);
-    let data = await response.json();
-    return {
-      posts: data.posts,
-      pages: data.pages
-    };
-  },
-  watchQuery: ["page"],
-  key: to => to.fullPath
-};
+  export default {
+    components: {PostCard},
+    async asyncData({params, query, env}) {
+      let url = `${env.apiUrl}/posts/${query.page ? '?page=' + query.page : ''}`;
+      let response = await fetch(url);
+      let data = await response.json();
+      return {
+        posts: data.posts,
+        pages: data.pages
+      };
+    },
+    watchQuery: ['page'],
+    key: to => to.fullPath
+  };
 </script>
 
 <style>
-.button-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+  .button-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 </style>
 

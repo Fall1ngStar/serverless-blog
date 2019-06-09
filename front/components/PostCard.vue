@@ -13,7 +13,7 @@
 
 <script>
   export default {
-    name: "PostCard",
+    name: 'PostCard',
     props: ['post'],
   }
 </script>
