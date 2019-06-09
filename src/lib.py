@@ -119,14 +119,16 @@ class PostModel(DynamoClient):
         return Post.from_ddb(self.table.get_item(Key=dict(post_id=post_id))['Item'])
 
     def create(self, author, title, content):
+        post_id = str(uuid4())
         self.table.put_item(Item=dict(
-            post_id=str(uuid4()),
+            post_id=post_id,
             create_date=datetime.now().isoformat(),
             type='post',
             author=author,
             title=title,
             content=content,
         ))
+        return post_id
 
     def delete(self, post_id):
         self.table.delete_item(Key=dict(post_id=post_id))
@@ -139,12 +141,12 @@ class PostModel(DynamoClient):
         page_slice = page_indexes[max(page_number - 2, 0):page_number + 3]
         begin, end = [], []
         if page_slice[0] != 0:
-            begin = [Page('1', 'btn btn-secondary', '/posts/?page=1'),
+            begin = [Page('1', 'btn btn-secondary', '/?page=1'),
                      Page('...', 'btn btn-secondary disabled', '#')]
         if page_slice[-1] != page_count - 1:
             end = [Page('...', 'btn btn-secondary disabled', '#'),
-                   Page(f'{page_count}', 'btn btn-secondary', f'/posts/?page={page_count}')]
-        mapped_pages = [Page(f'{index + 1}', 'btn btn-secondary', f'/posts/?page={index + 1}')
+                   Page(f'{page_count}', 'btn btn-secondary', f'/?page={page_count}')]
+        mapped_pages = [Page(f'{index + 1}', 'btn btn-secondary' + (' active' if index==page_number else ''), f'/?page={index + 1}')
                         for index in page_slice]
 
         return begin + mapped_pages + end

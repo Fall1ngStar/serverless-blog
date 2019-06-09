@@ -1,7 +1,8 @@
 """
 create_post
 """
-from src.lib import dump_result, handle_error
+import json
+from src.lib import dump_result, handle_error, PostModel
 
 
 @handle_error
@@ -9,5 +10,6 @@ def handler(event, _context):
     """
     Handler for the create_post Lambda function
     """
-
-    return dump_result('Post created', status_code=201)
+    model = PostModel()
+    post_id = model.create(**json.loads(event['body']))
+    return dump_result({'post_id': post_id}, status_code=201)

@@ -1,60 +1,73 @@
 functions:
   add_comment:
+    events:
+    - http:
+        cors: true
+        method: post
+        path: posts/{id}
+        request:
+          parameters:
+            paths:
+              id: true
     handler: src/add_comment.handler
-    events:
-      - http:
-          path: posts/{id}
-          method: post
-          cors: true
-          request:
-            parameters:
-              paths:
-                id: true
   create_post:
+    events:
+    - http:
+        cors: true
+        method: post
+        path: posts/create
     handler: src/create_post.handler
+  delete_post:
+    handler: src/delete_post.handler
     events:
-      - http:
-          path: posts/create
-          method: post
-          cors: true
+    - http:
+        cors: true
+        method: delete
+        path: posts/{id}
+        request:
+          parameters:
+            paths:
+              id: true
   get_post:
+    events:
+    - http:
+        cors: true
+        method: get
+        path: posts/{id}
+        request:
+          parameters:
+            paths:
+              id: true
     handler: src/get_post.handler
-    events:
-      - http:
-          path: posts/{id}
-          method: get
-          cors: true
-          request:
-            parameters:
-              paths:
-                id: true
   list_posts:
-    handler: src/list_posts.handler
     events:
-      - http:
-          path: posts
-          method: get
-          cors: true
-          request:
-            parameters:
-              query:
-                page: false
+    - http:
+        cors: true
+        method: get
+        path: posts
+        request:
+          parameters:
+            query:
+              page: false
+    handler: src/list_posts.handler
 package:
   exclude:
-    - ./**
-    - '!src/**'
-    - src/unit_test/**
-    - src/integration_test/**
+  - ./**
+  - '!src/**'
+  - src/unit_test/**
+  - src/integration_test/**
+plugins:
+- serverless-pseudo-parameters
 provider:
   deploymentBucket: ${env:DEPLOYMENT_BUCKET}
   environment:
     DYNAMO_TABLE: ${self:resources.Outputs.PostsTable.Value}
   iamRoleStatements:
-    - Action: dynamodb:*
-      Effect: Allow
-      Resource:
-        - arn:aws:dynamodb:#{AWS::Region}:#{AWS::AccountId}:table/posts${opt:stage}
-        - arn:aws:dynamodb:#{AWS::Region}:#{AWS::AccountId}:table/posts${opt:stage}/index/*
+  - Action: dynamodb:*
+    Effect: Allow
+    Resource:
+    - arn:aws:dynamodb:#{AWS::Region}:#{AWS::AccountId}:table/posts${opt:stage}
+    - arn:aws:dynamodb:#{AWS::Region}:#{AWS::AccountId}:table/posts${opt:stage}/index/*
   logRetentionInDays: 14
   memorySize: 128
   name: aws
@@ -69,28 +82,26 @@ resources:
     PostsTable:
       Properties:
         AttributeDefinitions:
-          - AttributeName: post_id
-            AttributeType: S
-          - AttributeName: type
-            AttributeType: S
-          - AttributeName: create_date
-            AttributeType: S
+        - AttributeName: post_id
+          AttributeType: S
+        - AttributeName: type
+          AttributeType: S
+        - AttributeName: create_date
+          AttributeType: S
         BillingMode: PAY_PER_REQUEST
-        KeySchema:
-          - AttributeName: post_id
-            KeyType: HASH
-        TableName: posts${opt:stage}
         GlobalSecondaryIndexes:
-          - IndexName: type-date-index
-            KeySchema:
-              - AttributeName: type
-                KeyType: HASH
-              - AttributeName: create_date
-                KeyType: RANGE
-            Projection:
-              ProjectionType: ALL
+        - IndexName: type-date-index
+          KeySchema:
+          - AttributeName: type
+            KeyType: HASH
+          - AttributeName: create_date
+            KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        KeySchema:
+        - AttributeName: post_id
+          KeyType: HASH
+        TableName: posts${opt:stage}
       Type: AWS::DynamoDB::Table
 service:
   name: simple-blog
-plugins:
-  - serverless-pseudo-parameters
