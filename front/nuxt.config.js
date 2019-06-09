@@ -62,7 +62,7 @@ module.exports = {
     }
   },
   env: {
-    apiUrl: 'https://hlaigo643k.execute-api.eu-west-1.amazonaws.com/dev'
+    apiUrl: 'https://api.serverless-blog.tgarcin.fr'
   }
 }
 
